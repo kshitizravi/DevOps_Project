@@ -1,55 +1,26 @@
 pipeline {
     agent any
-
-    environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        DEV_IMAGE = "${ravikshitiz}/dev:latest"
-        PROD_IMAGE = "${ravikshitiz}/prod:latest"
-    }
-
     stages {
         stage('Build') {
             steps {
-                sh 'sudo ./build.sh'
+                sh './build.sh'
             }
         }
-
-        stage('Push to Dev') {
-            when {
-                branch 'dev'
-            }
+        stage('Push to Docker Hub') {
             steps {
-                script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
-                        docker.image(DEV_IMAGE).push()
-                    }
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'DOCKER_HUB_PASSWORD', usernameVariable: 'DOCKER_HUB_USERNAME')]) {
+                    sh "echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin"
+                    sh "docker push ravikshitiz/dev-app:latest"
                 }
             }
         }
-
-        stage('Push to Prod') {
+        stage('Deploy') {
             when {
                 branch 'master'
             }
             steps {
-                script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
-                        docker.image(PROD_IMAGE).push()
-                    }
-                }
+                sh './deploy.sh'
             }
-        }
-
-        stage('Deploy') {
-            steps {
-                sh 'sudo ./deploy.sh'
-            }
-        }
-    }
-
-    post {
-        always {
-            cleanWs()
         }
     }
 }
