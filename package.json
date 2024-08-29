@@ -9,7 +9,10 @@
   "author": "",
   "license": "ISC",
   "description": "",
+  "dependencies": {
+    "react-scripts": "^5.0.1" 
+  },
   "devDependencies": {
     "serve": "^14.2.3"
-  }
+  }  
 }

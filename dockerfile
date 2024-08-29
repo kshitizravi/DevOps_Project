@@ -1,7 +1,7 @@
 # Dockerfile
 
 # Step 1: Build the React app
-FROM node:14 AS build
+FROM node:16-alpine AS build
 
 WORKDIR /app
 
