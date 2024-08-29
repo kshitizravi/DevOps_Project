@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh './build.sh'
+                sh 'sudo ./build.sh'
             }
         }
 
@@ -42,7 +42,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh './deploy.sh'
+                sh 'sudo ./deploy.sh'
             }
         }
     }
