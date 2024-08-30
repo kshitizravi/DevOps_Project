@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        DEV_IMAGE = "${ravikshitiz}/dev:latest"
-        PROD_IMAGE = "${ravikshitiz}/prod:latest"
+        DEV_IMAGE = "${DOCKERHUB_USERNAME}/dev:latest"
+        PROD_IMAGE = "${DOCKERHUB_USERNAME}/prod:latest"
     }
 
     stages {
