@@ -1,12 +1,6 @@
 pipeline {
     agent any
-
-    environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        DEV_IMAGE = "${ravikshitiz}/dev:latest"
-        PROD_IMAGE = "${ravikshitiz}/prod:latest"
-    }
-
+    
     stages {
         stage('Build') {
             steps {
@@ -16,31 +10,30 @@ pipeline {
         }
 
         stage('Push to Dev') {
-            when {
-                branch 'dev'
-            }
+            if (env.GIT_BRANCH == 'dev'){
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
-                        docker.image(DEV_IMAGE).push()
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_HUB_PASSWORD', usernameVariable: 'DOCKER_HUB_USERNAME')]) {
+                    sh "echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin"
+                    sh "docker push ravikshitiz/dev:latest"
                     }
                 }
             }
         }
-
+    }
         stage('Push to Prod') {
-            when {
-                branch 'master'
-            }
+            if (env.GIT_BRANCH == 'master'){
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
-                        docker.image(PROD_IMAGE).push()
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_HUB_PASSWORD', usernameVariable: 'DOCKER_HUB_USERNAME')]) {
+                    sh "echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin"
+                    sh "docker tag ravikshitiz/dev:latest ravikshitiz/prod:latest"
+                    sh "docker push ravikshitiz/prod:latest"
                     }
                 }
             }
         }
-
+    }
         stage('Deploy') {
             steps {
                 sh 'chmod +x deploy.sh'
