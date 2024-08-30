@@ -1,38 +1,43 @@
 pipeline {
     agent any
 
-    stages {
-        stage('Build') {
-            steps {
-                sh 'chmod +x build.sh'
-                sh './build.sh'
-            }
-        }
+    environment {
+        DEV_REPO = 'ravikshitiz/dev'
+        PROD_REPO = 'ravikshitiz/prod'
+        DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
+    }
 
-        stage('Push to Dev') {
+    stages {
+        stage('Build and Push to Dev') {
             when {
-                branch pattern: 'origin/dev', comparator: 'REGEXP'
-            } 
+                branch 'dev'
+            }
             steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_HUB_PASSWORD', usernameVariable: 'DOCKER_HUB_USERNAME')]) {
-                    sh "echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin"
-                    sh "docker push ravikshitiz/dev:latest"
+                script{
+                    def imageName = "${DEV_REPO}:latest"
+                    sh 'chmod +x build.sh'
+                    sh "./build.sh"
+                    withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                        sh "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin"
+                        sh "docker push ${imageName}"
                     }
-                }
+                } 
             }
         }
     
         stage('Push to Prod') {
             when {
-                branch pattern: 'origin/master', comparator: 'REGEXP'
+                branch 'master'
+                changeset "dev"
             }
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_HUB_PASSWORD', usernameVariable: 'DOCKER_HUB_USERNAME')]) {
-                    sh "echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin"
-                    sh "docker tag ravikshitiz/dev:latest ravikshitiz/prod:latest"
-                    sh "docker push ravikshitiz/prod:latest"
+                    sh 'docker build -t react-app-prod:latest .'
+                    sh 'docker tag react-app-prod:latest ravikshitiz/dev:latest'
+                    def imageName = "${PROD_REPO}:latest"
+                    withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                        sh "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin"
+                        sh "docker push ${imageName}"
                     }
                 }
             }
