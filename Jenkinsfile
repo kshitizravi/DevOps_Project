@@ -1,6 +1,6 @@
 pipeline {
     agent any
-    
+
     stages {
         stage('Build') {
             steps {
@@ -10,7 +10,9 @@ pipeline {
         }
 
         stage('Push to Dev') {
-            if (env.GIT_BRANCH == 'dev'){
+            when {
+                branch 'dev'
+            } 
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_HUB_PASSWORD', usernameVariable: 'DOCKER_HUB_USERNAME')]) {
@@ -20,9 +22,11 @@ pipeline {
                 }
             }
         }
-    }
+    
         stage('Push to Prod') {
-            if (env.GIT_BRANCH == 'master'){
+            when {
+                branch 'master'
+            }
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_HUB_PASSWORD', usernameVariable: 'DOCKER_HUB_USERNAME')]) {
@@ -33,7 +37,7 @@ pipeline {
                 }
             }
         }
-    }
+    
         stage('Deploy') {
             steps {
                 sh 'chmod +x deploy.sh'
