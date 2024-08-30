@@ -3,16 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "serve -s .",
-    "build" : "react-scripts build"
+    "start": "serve -s . -l 80"
   },
   "author": "",
   "license": "ISC",
   "description": "",
-  "dependencies": {
-    "react-scripts": "^5.0.1" 
-  },
   "devDependencies": {
     "serve": "^14.2.3"
-  }  
+  }
 }
