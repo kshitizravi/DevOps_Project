@@ -10,11 +10,8 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                def branchName = env.GIT_BRANCH?.replaceAll('^origin/', '')
                 sh 'chmod +x build.sh'
                 sh './build.sh'
-                echo "The current branch is ${env.BRANCH_NAME}"
-                sh 'printenv'
             }
         }
 
