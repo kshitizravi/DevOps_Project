@@ -11,7 +11,7 @@ pipeline {
 
         stage('Push to Dev') {
             when {
-                branch 'dev'
+                branch pattern: 'origin/dev', comparator: 'REGEXP'
             } 
             steps {
                 script {
@@ -25,7 +25,7 @@ pipeline {
     
         stage('Push to Prod') {
             when {
-                branch 'master'
+                branch pattern: 'origin/master', comparator: 'REGEXP'
             }
             steps {
                 script {
