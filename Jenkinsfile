@@ -15,7 +15,7 @@ pipeline {
             }
         }
 
-        stage('Pus to Dev') {
+        stage('Push to Dev') {
             when {
                 branch 'dev'
             }
