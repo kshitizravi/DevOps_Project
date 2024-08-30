@@ -2,47 +2,45 @@ pipeline {
     agent any
 
     environment {
-        DEV_REPO = 'ravikshitiz/dev'
-        PROD_REPO = 'ravikshitiz/prod'
-        DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        DEV_IMAGE = "${DOCKERHUB_USERNAME}/dev:latest"
+        PROD_IMAGE = "${DOCKERHUB_USERNAME}/prod:latest"
     }
 
     stages {
-        stage('Build and Push to Dev') {
-            when {
-                branch 'origin/dev'
-            }
+        stage('Build') {
             steps {
-                script{
-                    def imageName = "${DEV_REPO}:latest"
-                    sh 'chmod +x build.sh'
-                    sh "./build.sh"
-                    withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                        sh "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin"
-                        sh "docker push ${imageName}"
-                    }
-                } 
+                sh 'chmod +x build.sh'
+                sh './build.sh'
             }
         }
-    
-        stage('Push to Prod') {
+
+        stage('Push to Dev') {
             when {
-                branch 'master'
-                changeset "dev"
+                branch 'dev'
             }
             steps {
                 script {
-                    sh 'docker build -t react-app-prod:latest .'
-                    sh 'docker tag react-app-prod:latest ravikshitiz/dev:latest'
-                    def imageName = "${PROD_REPO}:latest"
-                    withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                        sh "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin"
-                        sh "docker push ${imageName}"
+                    docker.withRegistry('https://hub.docker.com', 'dockerhub-credentials') {
+                        docker.image(DEV_IMAGE).push()
                     }
                 }
             }
         }
-    
+
+        stage('Push to Prod') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                    docker.withRegistry('https://hub.docker.com', 'dockerhub-credentials') {
+                        docker.image(PROD_IMAGE).push()
+                    }
+                }
+            }
+        }
+
         stage('Deploy') {
             steps {
                 sh 'chmod +x deploy.sh'
