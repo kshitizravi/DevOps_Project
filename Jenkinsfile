@@ -1,12 +1,6 @@
 pipeline {
     agent any
-
-    environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        DEV_IMAGE = "${DOCKERHUB_USERNAME}/dev:latest"
-        PROD_IMAGE = "${DOCKERHUB_USERNAME}/prod:latest"
-    }
-
+    
     stages {
         stage('Build') {
             steps {
@@ -20,23 +14,23 @@ pipeline {
                 branch 'dev'
             }
             steps {
-                script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
-                        docker.image(DEV_IMAGE).push()
-                    }
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'DOCKER_HUB_PASSWORD', usernameVariable: 'DOCKER_HUB_USERNAME')]) {
+                    sh "echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin"
+                    sh "docker push ravikshitiz/dev:latest"
                 }
+                   
+                    }
             }
-        }
 
         stage('Push to Prod') {
             when {
                 branch 'master'
             }
             steps {
-                script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
-                        docker.image(PROD_IMAGE).push()
-                    }
+                   withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'DOCKER_HUB_PASSWORD', usernameVariable: 'DOCKER_HUB_USERNAME')]) {
+                    sh "echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin"
+                    sh "docker tag react-app/dev:latest ravikshitiz/prod:latest"
+                    sh "docker push ravikshitiz/prod:latest"
                 }
             }
         }
